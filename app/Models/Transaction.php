@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Transaction extends Model
 {
+    protected $fillable = ['date', 'amount', 'type', 'category', 'description'];
+    
     const TYPE_INCOME = 1;
     const TYPE_EXPENSE = 2;
 
