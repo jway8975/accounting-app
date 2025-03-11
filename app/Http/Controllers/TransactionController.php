@@ -10,7 +10,7 @@ class TransactionController extends Controller
     // 获取当前用户的所有交易
     public function index()
     {
-        return response()->json(Auth::user()->transactions()->orderBy('id')->paginate(20));
+        return response()->json(Auth::user()->transactions()->orderByDesc('date')->paginate(20));
     }
 
     // 存储新的交易记录

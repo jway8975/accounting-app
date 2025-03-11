@@ -25,6 +25,11 @@ const addTransaction = async () => {
     showModal.value = false;
 };
 
+const deleteTransaction = async (id) => {
+    await axios.delete(`/api/transactions/${id}`);
+    fetchTransactions(currentPage.value);
+};
+
 const nextPage = () => {
     if (currentPage.value < totalPages.value) {
         fetchTransactions(currentPage.value + 1);
@@ -49,7 +54,8 @@ onMounted(() => fetchTransactions(currentPage.value));
             <button @click="showModal = true" type="button" class="bg-green-500 text-white rounded p-2 mb-4">新增</button>
 
             <div class="grid grid-cols-4 gap-4">
-                <div v-for="transaction in transactions" :key="transaction.id" class="border rounded-lg p-4 bg-white shadow">
+                <div v-for="transaction in transactions" :key="transaction.id" class="border rounded-lg p-4 bg-white shadow relative">
+                    <button @click="deleteTransaction(transaction.id)" class="absolute top-2 right-2 text-red-500 bg-white rounded-full p-1">❌</button>
                     <h3 class="text-lg font-bold">{{ transaction.date }}</h3>
                     <p>{{ transaction.description }}</p>
                 </div>
