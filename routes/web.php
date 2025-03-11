@@ -26,6 +26,6 @@ Route::middleware('auth')->group(function () {
 
 Route::get('/transactions', function () {
     return Inertia::render('Transactions');
-})->middleware(['auth', 'verified']);
+})->middleware(['auth', 'verified'])->name('transactions');
 
 require __DIR__.'/auth.php';
