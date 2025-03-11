@@ -6,22 +6,38 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/vue3';
 
 const transactions = ref([]);
-const newTransaction = ref({ date: '', amount: '', type: '', category: '', description: '' });
+const currentPage = ref(1);
+const totalPages = ref(1);
 const showModal = ref(false);
+const newTransaction = ref({ date: '', amount: '', type: '', category: '', description: '' });
 
-const fetchTransactions = async () => {
-    const response = await axios.get('/api/transactions');
-    transactions.value = response.data;
+const fetchTransactions = async (page = 1) => {
+    const response = await axios.get(`/api/transactions?page=${page}`);
+    transactions.value = response.data.data;
+    totalPages.value = response.data.last_page;
+    currentPage.value = response.data.current_page;
 };
 
 const addTransaction = async () => {
     await axios.post('/api/transactions', newTransaction.value);
     newTransaction.value = { date: '', amount: '', type: '', category: '', description: '' };
-    fetchTransactions();
+    fetchTransactions(currentPage.value);
     showModal.value = false;
 };
 
-onMounted(fetchTransactions);
+const nextPage = () => {
+    if (currentPage.value < totalPages.value) {
+        fetchTransactions(currentPage.value + 1);
+    }
+};
+
+const prevPage = () => {
+    if (currentPage.value > 1) {
+        fetchTransactions(currentPage.value - 1);
+    }
+};
+
+onMounted(() => fetchTransactions(currentPage.value));
 </script>
 
 <template>
@@ -32,14 +48,17 @@ onMounted(fetchTransactions);
             <h2 class="text-2xl font-bold mb-4">记账记录</h2>
             <button @click="showModal = true" type="button" class="bg-green-500 text-white rounded p-2 mb-4">新增</button>
 
-            <ul class="space-y-2">
-                <li v-for="transaction in transactions" :key="transaction.id" class="border rounded p-4">
-                    <div class="flex justify-between">
-                        <span>{{ transaction.date }}</span>
-                        <span>{{ transaction.description }}</span>
-                    </div>
-                </li>
-            </ul>
+            <div class="grid grid-cols-4 gap-4">
+                <div v-for="transaction in transactions" :key="transaction.id" class="border rounded-lg p-4 bg-white shadow">
+                    <h3 class="text-lg font-bold">{{ transaction.date }}</h3>
+                    <p>{{ transaction.description }}</p>
+                </div>
+            </div>
+
+            <div class="flex justify-between mt-4">
+                <button @click="prevPage" :disabled="currentPage === 1" class="bg-gray-500 text-white rounded p-2">上一页</button>
+                <button @click="nextPage" :disabled="currentPage === totalPages" class="bg-gray-500 text-white rounded p-2">下一页</button>
+            </div>
         </div>
 
         <div v-if="showModal" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75">
