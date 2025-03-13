@@ -9,7 +9,7 @@ const transactions = ref([]);
 const currentPage = ref(1);
 const totalPages = ref(1);
 const showModal = ref(false);
-const newTransaction = ref({ date: '', amount: '', type: '', category: '', description: '' });
+const newTransaction = ref({ date: '', description: '' });
 
 const fetchTransactions = async (page = 1) => {
     const response = await axios.get(`/api/transactions?page=${page}`);
@@ -20,7 +20,7 @@ const fetchTransactions = async (page = 1) => {
 
 const addTransaction = async () => {
     await axios.post('/api/transactions', newTransaction.value);
-    newTransaction.value = { date: '', amount: '', type: '', category: '', description: '' };
+    newTransaction.value = { date: '', description: '' };
     fetchTransactions(currentPage.value);
     showModal.value = false;
 };

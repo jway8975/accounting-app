@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 
 class TransactionController extends Controller
@@ -18,12 +19,15 @@ class TransactionController extends Controller
     {
         $validated = $request->validate([
             'date' => 'required|date',
-            'amount' => 'required|numeric',
-            'type' => 'required|in:1,2', // 1=收入, 2=支出
-            'category' => 'nullable|string',
+            // 'amount' => 'required|numeric',
+            // 'type' => 'required|in:1,2', // 1=收入, 2=支出
+            // 'category' => 'nullable|string',
             'description' => 'nullable|string',
         ]);
 
+        $validated['amount'] = Arr::get($request, 'amount', 0);
+        $validated['type'] = Arr::get($request, 'type', 0);
+        $validated['category'] = Arr::get($request, 'category', 0);
         $transaction = Auth::user()->transactions()->create($validated);
 
         return response()->json($transaction, 201);
