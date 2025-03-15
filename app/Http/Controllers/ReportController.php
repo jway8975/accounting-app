@@ -14,7 +14,7 @@ class ReportController extends Controller
     {
         $user = Auth::user();
         $type = $request->input('type'); // 'monthly' or 'yearly'
-        
+
         if (!in_array($type, ['monthly', 'yearly'])) {
             return response()->json(['error' => 'Invalid report type'], 400);
         }
@@ -27,7 +27,7 @@ class ReportController extends Controller
             ->get(['date', 'description', 'amount', 'type']);
 
         $summary = $this->askAI($transactions);
-        
+
         // 存入数据库
         $report = Report::updateOrCreate([
             'user_id' => $user->id,
@@ -38,7 +38,7 @@ class ReportController extends Controller
             'total_expense' => $summary['total_expense'] ?? 0,
             'category_breakdown' => json_encode($summary['category_breakdown'] ?? []),
             'content' => "财务分析：\n总收入：" . ($summary['total_income'] ?? 0) .
-                         "\n总支出：" . ($summary['total_expense'] ?? 0),
+                "\n总支出：" . ($summary['total_expense'] ?? 0),
         ]);
 
         return response()->json($report);
@@ -75,9 +75,36 @@ class ReportController extends Controller
         // 解析 JSON 响应
         $responseData = $response->json()['response'];
         $responseData = trim($responseData);
-        
+
 
         // 确保 `content` 字段存在，并解析成 JSON
         return json_decode($responseData ?? '{}', true);
+    }
+
+    public function showTrends()
+    {
+        $reports = Auth::user()->reports()
+            ->where('type', 'monthly')
+            ->orderBy('period', 'desc')
+            ->limit(12)
+            ->get();
+
+        return response()->json($reports->map(fn($r) => [
+            'month' => $r->period,
+            'income' => $r->total_income,
+            'expense' => $r->total_expense
+        ]));
+    }
+
+    public function showDetails($period)
+    {
+        $report = Auth::user()->reports()
+            ->where('type', 'monthly')
+            ->where('period', $period)
+            ->first();
+
+        return response()->json([
+            'category_breakdown' => json_decode($report->category_breakdown ?? '{}'),
+        ]);
     }
 }
