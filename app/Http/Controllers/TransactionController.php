@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -9,9 +10,19 @@ use Illuminate\Support\Facades\Auth;
 class TransactionController extends Controller
 {
     // 获取当前用户的所有交易
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Auth::user()->transactions()->orderByDesc('date')->paginate(20));
+        $startDate = $request->query('start_date') ?? Carbon::now()->firstOfMonth()->format('Y-m-d');
+        $endDate = $request->query('end_date') ?? Carbon::now()->endOfMonth()->format('Y-m-d');
+
+        return response()->json(
+            Auth::user()
+            ->transactions()
+            ->when($startDate, fn($q) => $q->where('date', '>=', Carbon::createFromDate($startDate)->firstOfMonth()->format('Y-m-d')))
+            ->when($endDate, fn($q) => $q->where('date', '<=', Carbon::createFromDate($endDate)->endOfMonth()->format('Y-m-d')))
+            ->orderByDesc('date')
+            ->get()
+        );
     }
 
     // 存储新的交易记录

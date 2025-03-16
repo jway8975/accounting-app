@@ -6,43 +6,38 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/vue3';
 
 const transactions = ref([]);
-const currentPage = ref(1);
-const totalPages = ref(1);
 const showModal = ref(false);
 const newTransaction = ref({ date: '', description: '' });
+const startDate = ref('');
+const endDate = ref('');
 
-const fetchTransactions = async (page = 1) => {
-    const response = await axios.get(`/api/transactions?page=${page}`);
-    transactions.value = response.data.data;
-    totalPages.value = response.data.last_page;
-    currentPage.value = response.data.current_page;
+const fetchTransactions = async () => {
+    const response = await axios.get('/api/transactions', {
+        params: {
+            start_date: startDate.value,
+            end_date: endDate.value
+        }
+    });
+    transactions.value = response.data;
 };
 
 const addTransaction = async () => {
     await axios.post('/api/transactions', newTransaction.value);
     newTransaction.value = { date: '', description: '' };
-    fetchTransactions(currentPage.value);
+    fetchTransactions();
     showModal.value = false;
 };
 
 const deleteTransaction = async (id) => {
     await axios.delete(`/api/transactions/${id}`);
-    fetchTransactions(currentPage.value);
+    fetchTransactions();
 };
 
-const nextPage = () => {
-    if (currentPage.value < totalPages.value) {
-        fetchTransactions(currentPage.value + 1);
-    }
+const handleDateChange = () => {
+    fetchTransactions();
 };
 
-const prevPage = () => {
-    if (currentPage.value > 1) {
-        fetchTransactions(currentPage.value - 1);
-    }
-};
-
-onMounted(() => fetchTransactions(currentPage.value));
+onMounted(fetchTransactions);
 </script>
 
 <template>
@@ -53,17 +48,23 @@ onMounted(() => fetchTransactions(currentPage.value));
             <h2 class="text-2xl font-bold mb-4">记账记录</h2>
             <button @click="showModal = true" type="button" class="bg-green-500 text-white rounded p-2 mb-4">新增</button>
 
+            <div class="flex justify-between items-center mb-4">
+                <div class="mb-4">
+                    <label for="start-date" class="block text-sm font-medium text-gray-700">开始日期</label>
+                    <input type="month" id="start-date" v-model="startDate" @change="handleDateChange" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                </div>
+                <div class="mb-4">
+                    <label for="end-date" class="block text-sm font-medium text-gray-700">结束日期</label>
+                    <input type="month" id="end-date" v-model="endDate" @change="handleDateChange" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                </div>
+            </div>
+
             <div class="grid grid-cols-4 gap-4">
                 <div v-for="transaction in transactions" :key="transaction.id" class="border rounded-lg p-4 bg-white shadow relative">
                     <button @click="deleteTransaction(transaction.id)" class="absolute top-2 right-2 text-red-500 bg-white rounded-full p-1">❌</button>
                     <h3 class="text-lg font-bold">{{ transaction.date }}</h3>
                     <p>{{ transaction.description }}</p>
                 </div>
-            </div>
-
-            <div class="flex justify-between mt-4">
-                <button @click="prevPage" :disabled="currentPage === 1" class="bg-gray-500 text-white rounded p-2">上一页</button>
-                <button @click="nextPage" :disabled="currentPage === totalPages" class="bg-gray-500 text-white rounded p-2">下一页</button>
             </div>
         </div>
 
