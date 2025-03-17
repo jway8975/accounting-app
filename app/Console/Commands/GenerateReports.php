@@ -15,7 +15,7 @@ class GenerateReports extends Command
      *
      * @var string
      */
-    protected $signature = 'reports:generate';
+    protected $signature = 'reports:generate {year?} {month?}';
 
     /**
      * The console command description.
@@ -29,23 +29,27 @@ class GenerateReports extends Command
      */
     public function handle()
     {
+        $year = $this->argument('year') ?? Carbon::now()->year;
+        $month = $this->argument('month') ?? Carbon::now()->month;
+
         $this->info("开始生成 AI 财务报表...");
 
         $this->info("正在生成月报...");
 
-
-        User::all()->each(function ($user) {
+        User::all()->each(function ($user) use ($year, $month){
             Auth::login($user);
+
             $this->info("生成 {$user->name} 的月报...");
             app(ReportController::class)->generateReport(
-                new \Illuminate\Http\Request(['type' => 'monthly'])
+                new \Illuminate\Http\Request(['type' => 'monthly', 'year' => $year, 'month' => $month])
             );
 
             // 是否元旦当天
-            if (Carbon::now()->isSameDay(Carbon::now()->firstOfYear())) {
+            // if (Carbon::now()->isSameDay(Carbon::now()->firstOfYear())) {
+            if ($month == 1) {
                 $this->info("生成 {$user->name} 的年报...");
                 app(ReportController::class)->generateReport(
-                    new \Illuminate\Http\Request(['type' => 'yearly'])
+                    new \Illuminate\Http\Request(['type' => 'yearly', 'year' => $year])
                 );
             }
             
